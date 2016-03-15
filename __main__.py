@@ -45,6 +45,10 @@ def main(input_file, output_file):
 					color = 'black + 0.1mm'
 				elif math.pi - dihedral_angle > 0.3:
 					color = 'blue + 0.05mm'
+					
+					if face_normal > 0:
+						# With many short, consecutive lines, dashing breaks.
+						color += ' + linetype(new real[] { 1mm })'
 				else:
 					color = None
 				
