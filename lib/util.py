@@ -1,6 +1,10 @@
 import sys, contextlib, subprocess, tempfile, shutil, re, os, inspect, io, collections
 
 
+def log(message, *args):
+	print(message.format(*args), file = sys.stderr)
+
+
 class UserError(Exception):
 	def __init__(self, message, *args):
 		super(UserError, self).__init__(message.format(*args))

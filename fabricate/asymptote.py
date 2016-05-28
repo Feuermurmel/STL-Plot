@@ -106,7 +106,8 @@ class AsymptoteFile(File):
 			return self._serialize_value(value, close_paths)
 	
 	def _serialize_length(self, value):
-		return '{}mm'.format(self._serialize_value(value, False))
+		# Convert to float explicitly to prevent stuff like fractions from messing up the syntax (in that case we would divide by instead of multiply with mm).
+		return '{}mm'.format(self._serialize_value(float(value), False))
 	
 	def _serialize_value(self, value, close_paths):
 		if isinstance(value, paths.Path):

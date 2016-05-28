@@ -58,6 +58,10 @@ def rot_ccw(v):
 		v[0]])
 
 
+def interpolate(a, b, t):
+	return a + (b - a) * t
+
+
 def _turn_cos_sin(turns):
 	angle = turns * 2 * math.pi
 	

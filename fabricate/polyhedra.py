@@ -1,4 +1,4 @@
-import json, collections, numpy, stl.mesh
+import json, numpy, stl.mesh
 from . import linalg, paths
 
 
@@ -120,7 +120,7 @@ class Polyhedron:
 		:param faces: List of lists of vertex indexes.
 		"""
 		# Store numerical geometry data
-		self._vertex_coordinates = vertices[:]
+		self._vertex_coordinates = numpy.array(vertices, dtype = numpy.float64)
 		
 		# All views as list of the form [face : [vertex : ((vertex_id : int, vertex_id : int), PolyhedronView)]]
 		view_by_face = []
@@ -392,5 +392,6 @@ def dihedral_angle(view1: PolyhedronView, view2: PolyhedronView):
 	"""
 	n1 = face_normal(view1)
 	n2 = face_normal(view2)
-	theta = numpy.pi - numpy.arccos(numpy.dot(n1, n2))
+
+	theta = numpy.pi - numpy.arccos(numpy.clip(numpy.dot(n1, n2), -1, 1))
 	return theta
