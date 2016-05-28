@@ -14,4 +14,4 @@ Just a test for now. No features. No configuration. No refunds.
 
 ## Running
 
-	$ python . <stl-file>
+	$ stl-plot <stl-file>
