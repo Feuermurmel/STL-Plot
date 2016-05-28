@@ -20,4 +20,5 @@ def parse_args():
 	return args
 
 
-main(**vars(parse_args()))
+def script_main():
+	main(**vars(parse_args()))
