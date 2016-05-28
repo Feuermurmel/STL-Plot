@@ -55,16 +55,12 @@ class Intersection:
 		return None
 
 
-def get_intersections(lines_1 : typing.List[Segment], lines_2 : typing.List[Segment]) -> typing.List[Intersection]:
-	def iter_intersections():
-		for i in lines_1:
-			for j in lines_2:
-				intersection = Intersection.for_segments(i, j)
-				
-				if intersection is not None:
-					yield intersection
-		
-	return list(iter_intersections())
+def iter_intersections(lines: typing.List[Segment], line: Segment):
+	for i in lines:
+		intersection = Intersection.for_segments(i, line)
+
+		if intersection is not None:
+			yield intersection
 
 
 class Simplex:
@@ -113,13 +109,9 @@ class SimplexIntersection:
 				return None
 
 
-def get_simplex_intersections(simplexes : typing.List[Simplex], points : typing.List[Point]) -> typing.List[SimplexIntersection]:
-	def iter_intersections():
-		for i in simplexes:
-			for j in points:
-				intersection = SimplexIntersection.for_simplex_and_point(i, j)
-				
-				if intersection is not None:
-					yield intersection
-		
-	return list(iter_intersections())
+def iter_simplex_intersections(simplexes: typing.List[Simplex], point: Point):
+	for i in simplexes:
+		intersection = SimplexIntersection.for_simplex_and_point(i, point)
+
+		if intersection is not None:
+			yield intersection

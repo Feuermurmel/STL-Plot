@@ -113,13 +113,15 @@ def main(input_file, output_file):
 		if segment.is_boundary:
 			border_segments.append(segment)
 
-	simplexes = [make_simplex(i) for i in polyhedron.faces]
+	simplexes = sorted(
+		[make_simplex(i) for i in polyhedron.faces],
+		key=lambda x: x.p1.z)
 
 	def iter_border_intersections(segment: Segment):
 		yield fractions.Fraction(0)
 		yield fractions.Fraction(1)
 
-		for i in geometry.get_intersections(border_segments, [segment]):
+		for i in geometry.iter_intersections(border_segments, segment):
 			border_z = linalg.interpolate(i.segment_1.start.z, i.segment_1.end.z, i.t1)
 			drawn_z = linalg.interpolate(i.segment_2.start.z, i.segment_2.end.z, i.t2)
 
@@ -127,7 +129,7 @@ def main(input_file, output_file):
 				yield i.t2
 
 	def has_face_intersections(point: Point):
-		for i in geometry.get_simplex_intersections(simplexes, [point]):
+		for i in geometry.iter_simplex_intersections(simplexes, point):
 			simplex_p1_z = i.simplex.p1.z
 			simplex_p2_z = i.simplex.p2.z
 			simplex_p3_z = i.simplex.p3.z
@@ -173,10 +175,8 @@ def main(input_file, output_file):
 							style = 'blue + 0.05mm'
 						else:
 							style = 'black + 0.05mm'
-					else:
-						style = 'red + 0.02mm'
 
-					draw(i, a, b, style)
+						draw(i, a, b, style)
 		
 		asymptote.compile(asy_file, output_file)
 
