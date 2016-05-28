@@ -1,5 +1,5 @@
 import os, tempfile
-from lib import util
+from stl_plot import util
 import itertools, io, contextlib
 from . import paths
 

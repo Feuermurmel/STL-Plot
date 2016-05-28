@@ -1,24 +1,8 @@
-import fractions, math, numpy, argparse, os, tempfile, sys
+import fractions, math, numpy, os, tempfile, sys
 from functools import reduce
 
-from fabricate import asymptote, polyhedra, linalg, geometry
-from lib import util
-
-
-def parse_args():
-	parser = argparse.ArgumentParser()
-	
-	parser.add_argument('input_file')
-	parser.add_argument('-o', '--output-file')
-	
-	args = parser.parse_args()
-	
-	if args.output_file is None:
-		basename, _ = os.path.splitext(args.input_file)
-		
-		args.output_file = basename + '.pdf'
-	
-	return args
+from stl_plot.fabricate import asymptote, polyhedra, linalg, geometry
+from stl_plot import util
 
 
 def iter_progress(seq):
@@ -179,6 +163,3 @@ def main(input_file, output_file):
 						draw(i, a, b, style)
 		
 		asymptote.compile(asy_file, output_file)
-
-
-main(**vars(parse_args()))
