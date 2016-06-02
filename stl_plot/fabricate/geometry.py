@@ -1,7 +1,9 @@
 import fractions, typing
 
+from stl_plot.util import Hashable
 
-class Point:
+
+class Point(Hashable):
 	def __init__(self, x : fractions.Fraction, y : fractions.Fraction):
 		self.x = x
 		self.y = y
@@ -9,11 +11,17 @@ class Point:
 	def __repr__(self):
 		return 'Point({0.x}, {0.y})'.format(self)
 
+	def _hashable_key(self):
+		return self.x, self.y
 
-class Segment:
+
+class Segment(Hashable):
 	def __init__(self, start : Point, end : Point):
 		self.start = start
 		self.end = end
+
+	def _hashable_key(self):
+		return self.start, self.end
 
 
 class Intersection:
