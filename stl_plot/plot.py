@@ -1,7 +1,9 @@
+import collections
 import fractions, math, numpy, os, tempfile, sys
+import shutil
 from functools import reduce
 
-from stl_plot.fabricate import asymptote, polyhedra, linalg, geometry
+from stl_plot.fabricate import asymptote, polyhedra, linalg, geometry, paths
 from stl_plot import util
 
 
@@ -34,14 +36,71 @@ class Segment(geometry.Segment):
 		"""Whether the segment represents a visible internal edge between two front faces."""
 
 
+class Line:
+	def __init__(self, *, points):
+		self.points = points
+
+	@property
+	def start(self):
+		return self.points[0]
+
+	@property
+	def end(self):
+		return self.points[-1]
+
+	def reverse(self):
+		return type(self)(points=list(reversed(self.points)))
+
+	@classmethod
+	def join(cls, line1, line2):
+		assert line1.end == line2.start
+
+		return cls(points=line1.points + line2.points[1:])
+
+
+def join_lines(lines):
+	lines_by_ends = { }
+
+	for line in lines:
+		while True:
+			other_line = lines_by_ends.pop(line.end, None)
+
+			if other_line is None:
+				line = line.reverse()
+				other_line = lines_by_ends.pop(line.end, None)
+
+				if other_line is None:
+					break
+
+			if other_line.start != line.end:
+				other_line = other_line.reverse()
+
+			# May not exist, if the line is cyclic.
+			lines_by_ends.pop(other_line.end, None)
+
+			line = Line.join(line, other_line)
+
+		for end in line.start, line.end:
+			# We may overwrite the start, if this line's start and end overlap.
+			# But we handle this case in the logic above.
+			lines_by_ends[end] = line
+
+	return set(lines_by_ends.values())
+
+
 def main(input_file, output_file):
 	projection = reduce(
 		numpy.dot,
 		[
-			linalg.rotation_matrix(.05, [1, 0, 0]),
-			linalg.rotation_matrix(.05, [0, 1, 0]),
+			# Look slightly from above
+			linalg.rotation_matrix(.06, [1, 0, 0]),
+			# Turn a bit to the right.
+			linalg.rotation_matrix(.04, [0, 1, 0]),
+			# Make upright.
 			linalg.rotation_matrix(-.25, [1, 0, 0])])
-	min_angle = 0.3
+
+	# Slightly more than 2 * pi divided by $fn.
+	min_angle = 6.3 / 32
 	
 	polyhedron = polyhedra.Polyhedron.load_from_stl(input_file)
 
@@ -88,8 +147,8 @@ def main(input_file, output_file):
 	
 	util.log('Detecting edges ...')
 	
-	for i in polyhedron.edges:
-		segment = make_segment(i)
+	for segment in polyhedron.edges:
+		segment = make_segment(segment)
 		
 		if segment.is_edge or segment.is_boundary:
 			drawn_segments.append(segment)
@@ -137,29 +196,35 @@ def main(input_file, output_file):
 		len(drawn_segments),
 		len(simplexes))
 
+	lines_by_style = collections.defaultdict(list)
+
+	for segment in iter_progress(drawn_segments):
+		positions = sorted(set(iter_border_intersections(segment)))
+
+		for a, b in zip(positions[:-1], positions[1:]):
+			if not has_face_intersections(point_on_segment(segment, (a + b) / 2)):
+				if segment.is_edge:
+					style = 'blue + 0.05mm'
+				else:
+					style = 'black + 0.05mm'
+
+				start = point_on_segment(segment, a)
+				end = point_on_segment(segment, b)
+
+				lines_by_style[style].append(Line(points=[start, end]))
+
+	util.log('Generating drawing ...')
+
 	with tempfile.TemporaryDirectory() as tempdir:
 		asy_file = os.path.join(tempdir, 'out.asy')
 
 		with asymptote.open_write(asy_file) as file:
-			def draw(segment: Segment, a, b, pen):
-				start = point_on_segment(segment, a)
-				end = point_on_segment(segment, b)
+			for style, lines in lines_by_style.items():
+				lines = join_lines(lines)
 
-				start = start.x, start.y
-				end = end.x, end.y
+				for line in lines:
+					path = paths.path(*((i.x, i.y) for i in line.points))
 
-				file.write('draw({} -- {}, {});', start, end, pen)
+					file.write('draw({}, {});', path, style)
 
-			for i in iter_progress(drawn_segments):
-				positions = sorted(set(iter_border_intersections(i)))
-
-				for a, b in zip(positions[:-1], positions[1:]):
-					if not has_face_intersections(point_on_segment(i, (a + b) / 2)):
-						if i.is_edge:
-							style = 'blue + 0.05mm'
-						else:
-							style = 'black + 0.05mm'
-
-						draw(i, a, b, style)
-		
 		asymptote.compile(asy_file, output_file)
