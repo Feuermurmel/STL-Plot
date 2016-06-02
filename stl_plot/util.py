@@ -1,4 +1,11 @@
-import sys, contextlib, subprocess, tempfile, shutil, re, os, inspect, io, collections
+import abc
+import contextlib
+import io
+import os
+import re
+import shutil
+import subprocess
+import sys
 
 
 def log(message, *args):
@@ -8,6 +15,18 @@ def log(message, *args):
 class UserError(Exception):
 	def __init__(self, message, *args):
 		super(UserError, self).__init__(message.format(*args))
+
+
+class Hashable(metaclass=abc.ABCMeta):
+	def __eq__(self, other):
+		return type(self) is type(other) \
+		       and self._hashable_key() == other._hashable_key()
+
+	def __hash__(self):
+		return hash(self._hashable_key())
+
+	@abc.abstractmethod
+	def _hashable_key(self): pass
 
 
 # def main(fn):
